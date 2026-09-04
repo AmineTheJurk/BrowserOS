@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>BrowserOS</title>
+<style>
+  html, body {
+    margin: 0; padding: 0; height: 100%;
+    background: #0b0f0b;
+    font-family: 'Courier New', monospace;
+    overflow: hidden;
+  }
+  #crt {
+    position: relative;
+    width: 100vw; height: 100vh;
+    padding: 24px;
+    box-sizing: border-box;
+    background: radial-gradient(ellipse at center, #0e1a0e 0%, #060a06 100%);
+  }
+  #crt::before {
+    content: "";
+    position: absolute; inset: 0;
+    background: repeating-linear-gradient(
+      0deg, rgba(0,0,0,0.15) 0px, rgba(0,0,0,0.15) 1px,
+      transparent 1px, transparent 3px
+    );
+    pointer-events: none;
+    z-index: 2;
+  }
+  #crt::after {
+    content: "";
+    position: absolute; inset: 0;
+    box-shadow: inset 0 0 120px rgba(0,0,0,0.85);
+    pointer-events: none;
+    z-index: 3;
+  }
+  #titlebar {
+    color: #4dff4d;
+    text-shadow: 0 0 6px #2eff2e;
+    font-size: 14px;
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+  }
+  #screen {
+    position: relative;
+    z-index: 1;
+    height: calc(100% - 40px);
+    overflow-y: auto;
+    color: #4dff4d;
+    text-shadow: 0 0 5px #2eff2e, 0 0 1px #2eff2e;
+    font-size: 16px;
+    line-height: 1.35;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  #inputline { display: flex; }
+  #inputline input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #4dff4d;
+    text-shadow: 0 0 5px #2eff2e;
+    font-family: inherit;
+    font-size: 16px;
+  }
+  ::selection { background: #2eff2e33; }
+</style>
+</head>
+<body>
+<div id="crt">
+  <div id="titlebar">BrowserOS :: sandboxed terminal :: free &amp; public</div>
+  <div id="screen"><div id="log"></div><div id="inputline">&nbsp;<input id="cmd" autofocus autocomplete="off" spellcheck="false"/></div></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.min.js"></script>
+<script>
+  const log = document.getElementById('log');
+  const input = document.getElementById('cmd');
+  const screen = document.getElementById('screen');
+  const socket = io();
+
+  function write(text) {
+    log.textContent += text;
+    screen.scrollTop = screen.scrollHeight;
+  }
+
+  socket.on('output', (msg) => write(msg.data));
+  socket.on('clear', () => { log.textContent = ''; });
+
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      const cmd = input.value;
+      write(cmd);
+      socket.emit('command', { cmd });
+      input.value = '';
+    }
+  });
+
+  document.body.addEventListener('click', () => input.focus());
+</script>
+</body>
+</html>
